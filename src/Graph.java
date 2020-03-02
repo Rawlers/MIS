@@ -1,14 +1,10 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.sql.SQLOutput;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
 
-//Change remove to instead remove neighbors from respective degree lists
-//Instead of removing nodes, mark them.
 //increaseDegree and lowerDegree has some funkyness.
-
 
 public class Graph {
     int V;
