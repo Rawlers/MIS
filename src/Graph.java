@@ -186,7 +186,7 @@ public class Graph {
     }
 
     static LinkedList<Vertex> removeNeighborhood(Graph graph, Vertex vertex) {
-        LinkedList removedVertices = new LinkedList<Vertex>();
+        LinkedList<Vertex> removedVertices = new LinkedList<Vertex>();
         for(Vertex neighbor : vertex.neighbors) {
             Vertex removedVertex = removeVertex(graph, neighbor);
             removedVertices.add(removedVertex);
@@ -279,7 +279,7 @@ public class Graph {
         File file = new File("frb30-15-mis/frb30-15-5.mis");
         try {
             Graph testgraph1 = readGraph(file);
-            Graph testgraph2 = randomGraph(3, 999, 200);
+            Graph testgraph2 = randomGraph(4, 9999, 100);
             //printGraph(testgraph2);
             System.out.println("MIS: " + mis3(testgraph2));
 
