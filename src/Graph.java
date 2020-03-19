@@ -182,14 +182,18 @@ public class Graph {
             lowerDegrees(graph, vertex);
             return vertex;
         }
-        return null;
+        else {
+            return null;
+        }
     }
 
     static LinkedList<Vertex> removeNeighborhood(Graph graph, Vertex vertex) {
-        LinkedList<Vertex> removedVertices = new LinkedList<Vertex>();
+        LinkedList<Vertex> removedVertices = new LinkedList<>();
         for(Vertex neighbor : vertex.neighbors) {
             Vertex removedVertex = removeVertex(graph, neighbor);
-            removedVertices.add(removedVertex);
+            if(removedVertex != null) {
+                removedVertices.add(removedVertex);
+            }
         }
         removedVertices.add(vertex);
         removeVertex(graph, vertex);
@@ -197,6 +201,7 @@ public class Graph {
     }
 
     static void restoreVertex(Graph graph, Vertex vertex) {
+        //Vertices MUST somehow all be marked as not removed, before we fix degrees.
         vertex.removed = false;
         switch(vertex.getDegree()){
             case 0:
@@ -233,11 +238,13 @@ public class Graph {
 
     static int polyAlg(Graph graph) {
         int is = 0;
+        LinkedList<Vertex> neighbors = new LinkedList<>();
         while(graph.degree2.size() > 0) {
             Vertex vertex = graph.degree2.getFirst();
-            removeNeighborhood(graph, vertex);
+            neighbors.addAll(removeNeighborhood(graph, vertex));
             is++;
         }
+        restoreNeighborhood(graph, neighbors);
         return is;
     }
 
@@ -251,9 +258,9 @@ public class Graph {
         }
         if(graph.degree1.size() > 0) {
             Vertex v = graph.degree1.getFirst();
-            removeNeighborhood(graph, v);
+            LinkedList<Vertex> neighbors = removeNeighborhood(graph, v);
             int misCount = mis3(graph);
-            restoreVertex(graph, v);
+            restoreNeighborhood(graph, neighbors);
             return 1 + misCount;
         }
         if(graph.degree3.size() > 0) {
@@ -276,10 +283,10 @@ public class Graph {
     }
 
     public static void main(String[] args) {
-        File file = new File("frb30-15-mis/frb30-15-5.mis");
+        File file = new File("frb30-15-mis/frb30-15-1.mis");
         try {
             Graph testgraph1 = readGraph(file);
-            Graph testgraph2 = randomGraph(4, 9999, 100);
+            Graph testgraph2 = randomGraph(4, 9999, 5);
             //printGraph(testgraph2);
             System.out.println("MIS: " + mis3(testgraph2));
 
