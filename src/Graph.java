@@ -163,40 +163,43 @@ public class Graph {
     }
 
     static Vertex removeVertex(Graph graph, Vertex vertex) {
-        if(!vertex.removed) {
-            vertex.removed = true;
-
-            switch(vertex.getDegree()) {
-                case 0:
-                    graph.degree0.remove(vertex);
-                    break;
-                case 1:
-                    graph.degree1.remove(vertex);
-                    break;
-                case 2:
-                    graph.degree2.remove(vertex);
-                    break;
-                default:
-                    graph.degree3.remove(vertex);
-            }
-            lowerDegrees(graph, vertex);
-            return vertex;
-        }
-        else {
-            return null;
-        }
+        vertex.removed = true;
+        /*switch (vertex.getDegree()) {
+            case 0:
+                graph.degree0.remove(vertex);
+                break;
+            case 1:
+                graph.degree1.remove(vertex);
+                break;
+            case 2:
+                graph.degree2.remove(vertex);
+                break;
+            default:
+                graph.degree3.remove(vertex);
+        }*/
+        graph.degree0.remove(vertex);
+        graph.degree1.remove(vertex);
+        graph.degree2.remove(vertex);
+        graph.degree3.remove(vertex);
+        return vertex;
     }
 
     static LinkedList<Vertex> removeNeighborhood(Graph graph, Vertex vertex) {
         LinkedList<Vertex> removedVertices = new LinkedList<>();
+        vertex.removed = true;
+        removedVertices.add(vertex);
         for(Vertex neighbor : vertex.neighbors) {
-            Vertex removedVertex = removeVertex(graph, neighbor);
-            if(removedVertex != null) {
-                removedVertices.add(removedVertex);
+            if(!neighbor.removed) {
+                neighbor.removed = true;
+                removedVertices.add(neighbor);
             }
         }
-        removedVertices.add(vertex);
-        removeVertex(graph, vertex);
+        for(Vertex removed : removedVertices) {
+            graph.degree0.remove(removed);
+            graph.degree1.remove(removed);
+            graph.degree2.remove(removed);
+            graph.degree3.remove(removed);
+        }
         return removedVertices;
     }
 
@@ -216,10 +219,12 @@ public class Graph {
             default:
                 graph.degree3.add(vertex);
         }
-        increaseDegrees(graph, vertex);
     }
 
     static void restoreNeighborhood(Graph graph, LinkedList<Vertex> vertices) {
+        for(Vertex vertex : vertices) {
+            vertex.removed = false;
+        }
         for(Vertex vertex : vertices) {
             restoreVertex(graph, vertex);
         }
@@ -252,8 +257,10 @@ public class Graph {
         if(graph.degree0.size() > 0) {
             Vertex v = graph.degree0.getFirst();
             removeVertex(graph, v);
+            lowerDegrees(graph, v);
             int misCount = mis3(graph);
             restoreVertex(graph, v);
+            increaseDegrees(graph, v);
             return 1 + misCount;
         }
         if(graph.degree1.size() > 0) {
@@ -271,8 +278,10 @@ public class Graph {
             restoreNeighborhood(graph, neighbors);
 
             removeVertex(graph, v);
+            lowerDegrees(graph, v);
             int misCount = mis3(graph);
             restoreVertex(graph, v);
+            increaseDegrees(graph, v);
 
             return Math.max(misCountAlt, misCount);
         }
@@ -286,7 +295,7 @@ public class Graph {
         File file = new File("frb30-15-mis/frb30-15-1.mis");
         try {
             Graph testgraph1 = readGraph(file);
-            Graph testgraph2 = randomGraph(4, 9999, 5);
+            Graph testgraph2 = randomGraph(4, 9999, 50);
             //printGraph(testgraph2);
             System.out.println("MIS: " + mis3(testgraph2));
 
