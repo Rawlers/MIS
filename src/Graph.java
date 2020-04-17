@@ -212,19 +212,26 @@ public class Graph {
     }
 
     static int mis3(Graph graph) {
-        if (graph.degree0.size() > 0) {
-            Vertex v = graph.degree0.getFirst();
-            removeVertex(graph, v);
-            int misCount = mis3(graph);
-            restoreVertex(graph, v);
-            return 1 + misCount;
-        }
-        if (graph.degree1.size() > 0) {
-            Vertex v = graph.degree1.getFirst();
-            LinkedList<Vertex> neighbors = removeNeighborhood(graph, v);
-            int misCount = mis3(graph);
-            restoreNeighborhood(graph, neighbors);
-            return 1 + misCount;
+        if(graph.degree0.size() > 0 || graph.degree1.size() > 0) {
+            int misCount = 0;
+            LinkedList<Vertex> reducedVertices = new LinkedList<>();
+            while(graph.degree0.size() > 0) {
+                Vertex v = graph.degree0.getFirst();
+                Vertex reduced = removeVertex(graph, v);
+                misCount++;
+                reducedVertices.add(reduced);
+
+            }
+            while(graph.degree1.size() > 0) {
+                Vertex v = graph.degree1.getFirst();
+                LinkedList<Vertex> reduced = removeNeighborhood(graph, v);
+                misCount++;
+                reducedVertices.addAll(reduced);
+
+            }
+            misCount += mis3(graph);
+            restoreNeighborhood(graph, reducedVertices);
+            return misCount;
         }
         if (graph.degree3.size() > 0) {
             Vertex v = maxDegreeVertex(graph);
@@ -249,7 +256,7 @@ public class Graph {
         File file = new File("frb30-15-mis/frb30-15-1.mis");
         try {
             Graph testgraph1 = readGraph(file);
-            Graph testgraph2 = randomGraph(3, 9999, 6);
+            Graph testgraph2 = randomGraph(4, 9999, 50);
             printGraph(testgraph2);
             System.out.println("MIS: " + mis3(testgraph2));
 
