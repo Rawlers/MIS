@@ -4,6 +4,7 @@ public class Vertex {
     LinkedList<Vertex> neighbors;
     int id;
     boolean removed;
+    int degree;
 
     Vertex(int id) {
         this.neighbors = new LinkedList<>();
