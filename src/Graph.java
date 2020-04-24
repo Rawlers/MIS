@@ -1,10 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.LinkedList;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
-//increaseDegree and lowerDegree has some funkyness.
 
 public class Graph {
     int V;
@@ -14,6 +11,7 @@ public class Graph {
     LinkedList<Vertex> degree1;
     LinkedList<Vertex> degree2;
     LinkedList<Vertex> degree3;
+    LinkedList<Vertex> degreeUp;
     LinkedList[] degreearray;
 
     Graph(int V) {
@@ -25,11 +23,12 @@ public class Graph {
         degree0 = new LinkedList<>();
         degree1 = new LinkedList<>();
         degree2 = new LinkedList<>();
-
-        // degree 3 or larger
         degree3 = new LinkedList<>();
 
-        degreearray = new LinkedList[]{degree0, degree1, degree2, degree3};
+        // degree 4 or larger
+        degreeUp = new LinkedList<>();
+
+        degreearray = new LinkedList[]{degree0, degree1, degree2, degree3, degreeUp};
 
 
         // initialize vertices
@@ -46,18 +45,18 @@ public class Graph {
 
     static void sortByDegree(Graph graph) {
         for (Vertex vertex : graph.vertices) {
-            if (!vertex.removed) {
-                ;
                 if (vertex.degree == 0) {
                     graph.degree0.add(vertex);
                 } else if (vertex.degree == 1) {
                     graph.degree1.add(vertex);
                 } else if (vertex.degree == 2) {
                     graph.degree2.add(vertex);
-                } else {
+                } else if (vertex.degree == 3) {
                     graph.degree3.add(vertex);
+                } else {
+                    graph.degreeUp.add(vertex);
                 }
-            }
+            Collections.sort(graph.degreeUp, Comparator.comparingInt((Vertex v) -> v.degree).reversed());
         }
     }
 
@@ -128,14 +127,13 @@ public class Graph {
         if (vertex.degree <= 3) {
             graph.degreearray[vertex.degree].remove(vertex);
         } else {
-            graph.degree3.remove(vertex);
+            graph.degreeUp.remove(vertex);
         }
-        vertex.degree = vertex.getDegree();
 
         for (Vertex neighbor : vertex.neighbors) {
             if (!neighbor.removed) {
                 neighbor.degree = neighbor.degree - 1;
-                if (neighbor.degree < 3) {
+                if (neighbor.degree <= 3) {
                     graph.degreearray[neighbor.degree + 1].remove(neighbor);
                     graph.degreearray[neighbor.degree].add(neighbor);
                 }
@@ -145,18 +143,17 @@ public class Graph {
     }
 
     static void restoreVertex(Graph graph, Vertex vertex) {
-        //STILL FUNKY HERE I THINK
         vertex.removed = false;
         vertex.degree = vertex.getDegree();
         if (vertex.degree <= 3) {
             graph.degreearray[vertex.degree].add(vertex);
         } else {
-            graph.degree3.add(vertex);
+            graph.degreeUp.add(vertex);
         }
         for (Vertex neighbor : vertex.neighbors) {
             if (!neighbor.removed) {
                 neighbor.degree = neighbor.degree + 1;
-                if (neighbor.degree <= 3) {
+                if (neighbor.degree <= 4) {
                     graph.degreearray[neighbor.degree - 1].remove(neighbor);
                     graph.degreearray[neighbor.degree].add(neighbor);
                 }
@@ -181,20 +178,18 @@ public class Graph {
     }
 
     static void restoreNeighborhood(Graph graph, LinkedList<Vertex> vertices) {
-        /*for (Vertex vertex : vertices) {
-            vertex.removed = false;
-        }*/
         for (Vertex vertex : vertices) {
             restoreVertex(graph, vertex);
         }
     }
 
     static Vertex maxDegreeVertex(Graph graph) {
-        Vertex maxDegreeVertex = graph.degree3.getFirst();
-        for (Vertex vertex : graph.degree3) {
-            if (vertex.getDegree() >= maxDegreeVertex.getDegree() && !vertex.removed) {
-                maxDegreeVertex = vertex;
-            }
+        Vertex maxDegreeVertex;
+        if(graph.degreeUp.size() > 0) {
+            maxDegreeVertex = graph.degreeUp.getFirst();
+        }
+        else{
+            maxDegreeVertex = graph.degree3.getFirst();
         }
         return maxDegreeVertex;
     }
@@ -215,13 +210,6 @@ public class Graph {
         if(graph.degree0.size() > 0 || graph.degree1.size() > 0) {
             int misCount = 0;
             LinkedList<Vertex> reducedVertices = new LinkedList<>();
-            while(graph.degree0.size() > 0) {
-                Vertex v = graph.degree0.getFirst();
-                Vertex reduced = removeVertex(graph, v);
-                misCount++;
-                reducedVertices.add(reduced);
-
-            }
             while(graph.degree1.size() > 0) {
                 Vertex v = graph.degree1.getFirst();
                 LinkedList<Vertex> reduced = removeNeighborhood(graph, v);
@@ -229,11 +217,18 @@ public class Graph {
                 reducedVertices.addAll(reduced);
 
             }
+            while(graph.degree0.size() > 0) {
+                Vertex v = graph.degree0.getFirst();
+                Vertex reduced = removeVertex(graph, v);
+                misCount++;
+                reducedVertices.add(reduced);
+
+            }
             misCount += mis3(graph);
             restoreNeighborhood(graph, reducedVertices);
             return misCount;
         }
-        if (graph.degree3.size() > 0) {
+        if (graph.degree3.size() > 0 || graph.degreeUp.size() > 0) {
             Vertex v = maxDegreeVertex(graph);
 
             LinkedList<Vertex> neighbors = removeNeighborhood(graph, v);
@@ -256,8 +251,8 @@ public class Graph {
         File file = new File("frb30-15-mis/frb30-15-1.mis");
         try {
             Graph testgraph1 = readGraph(file);
-            Graph testgraph2 = randomGraph(4, 9999, 50);
-            printGraph(testgraph2);
+            Graph testgraph2 = randomGraph(4, 110*4, 110);
+            //printGraph(testgraph2);
             System.out.println("MIS: " + mis3(testgraph2));
 
         } catch (FileNotFoundException e) {
