@@ -88,8 +88,8 @@ public class Graph {
         Random random = new Random();
         int edgecount = random.nextInt(maxedgecount);
         for (int i = 0; i <= edgecount; i++) {
-            Vertex v1 = graph.vertices.get(random.nextInt(size));
-            Vertex v2 = graph.vertices.get(random.nextInt(size));
+            Vertex v1 = graph.vertices.get(random.nextInt(size - 1));
+            Vertex v2 = graph.vertices.get(random.nextInt(size - 1));
             if (!v1.neighbors.contains(v2)) {
                 if (v1.getDegree() < maxdegree && v2.getDegree() < maxdegree) {
                     if (v1 != v2) {
@@ -98,6 +98,45 @@ public class Graph {
                 }
             }
         }
+        for (Vertex vertex : graph.vertices) {
+            vertex.degree = vertex.getDegree();
+        }
+        sortByDegree(graph);
+        return graph;
+    }
+
+    static Graph randomClique(int cliquesize, int cliquecount) {
+        Graph graph = new Graph(cliquesize * cliquecount);
+        Random random = new Random();
+        LinkedList<Vertex> uncliqued = new LinkedList<>();
+        LinkedList<Vertex> cliqueleaders = new LinkedList<>();
+
+        uncliqued.addAll(graph.vertices);
+
+        while(!uncliqued.isEmpty()) {
+            LinkedList<Vertex> clique = new LinkedList<>();
+            for (int i = 0; i < cliquesize; i++) {
+                if(!uncliqued.isEmpty()) {
+                    Vertex vertex = uncliqued.remove(random.nextInt(uncliqued.size()));
+                    clique.add(vertex);
+                }
+            }
+
+            cliqueleaders.add(clique.getFirst());
+
+            for(Vertex v1 : clique) {
+                for(Vertex v2: clique) {
+                    if(v1 != v2 && !v1.neighbors.contains(v2) && !v2.neighbors.contains(v1)) {
+                        addEdge(graph, v1.id, v2.id);
+                    }
+                }
+            }
+        }
+        /*while(!cliqueleaders.isEmpty()) {
+            Vertex v1 = cliqueleaders.pop();
+            Vertex v2 = cliqueleaders.pop();
+            addEdge(graph, v1.id, v2.id);
+        }*/
         for (Vertex vertex : graph.vertices) {
             vertex.degree = vertex.getDegree();
         }
@@ -252,8 +291,9 @@ public class Graph {
         try {
             Graph testgraph1 = readGraph(file);
             Graph testgraph2 = randomGraph(4, 110*4, 110);
-            //printGraph(testgraph2);
-            System.out.println("MIS: " + mis3(testgraph2));
+            Graph testgraph3 = randomClique(4, 20);
+            printGraph(testgraph3);
+            System.out.println("MIS: " + mis3(testgraph3));
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
