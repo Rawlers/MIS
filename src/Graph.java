@@ -132,11 +132,13 @@ public class Graph {
                 }
             }
         }
-        /*while(!cliqueleaders.isEmpty()) {
-            Vertex v1 = cliqueleaders.pop();
-            Vertex v2 = cliqueleaders.pop();
-            addEdge(graph, v1.id, v2.id);
-        }*/
+        while(!cliqueleaders.isEmpty()) {
+            Vertex v1 = cliqueleaders.remove(random.nextInt(cliqueleaders.size()));
+            if(!cliqueleaders.isEmpty()) {
+                Vertex v2 = cliqueleaders.get(random.nextInt(cliqueleaders.size()));
+                addEdge(graph, v1.id, v2.id);
+            }
+        }
         for (Vertex vertex : graph.vertices) {
             vertex.degree = vertex.getDegree();
         }
@@ -291,7 +293,7 @@ public class Graph {
         try {
             Graph testgraph1 = readGraph(file);
             Graph testgraph2 = randomGraph(4, 110*4, 110);
-            Graph testgraph3 = randomClique(4, 20);
+            Graph testgraph3 = randomClique(4, 24);
             printGraph(testgraph3);
             System.out.println("MIS: " + mis3(testgraph3));
 
