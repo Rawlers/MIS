@@ -1,82 +1,116 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Arrays;
+
 public class Testing {
 
+    static void testMethod(int degree, String filename) throws IOException {
+        long[] timeavg = new long[20];
+        int[] stnodesavg = new int[20];
+        int[] opsavg = new int[20];
+
+        for (int i = 0; i < 20; i++) {
+            int size = (i + 1) * 5;
+            int edgecount = size * degree;
+            long[] times = new long[100];
+            long[] stnodes = new long[100];
+            long[] ops = new long[100];
+
+            for (int j = 0; j < 100; j++) {
+                Graph test = Graph.randomGraph(degree, edgecount, size);
+                long start = System.nanoTime();
+                Graph.mis3(test);
+                long time = System.nanoTime() - start;
+                times[j] = time;
+                stnodes[j] = test.stnodes;
+                ops[j] = test.ops;
+            }
+            long timesum = 0;
+            int stnodessum = 0;
+            int opssum = 0;
+            for (int j = 0; j < 100; j++) {
+                timesum += times[j];
+                stnodessum += stnodes[j];
+                opssum += ops[j];
+            }
+            timeavg[i] = timesum / 100;
+            stnodesavg[i] = stnodessum / 100;
+            opsavg[i] = opssum / 100;
+
+        }
+        FileWriter data = new FileWriter(filename + ".csv");
+        data.append("Size");
+        data.append(",");
+        data.append("Time");
+        data.append(",");
+        data.append("STnodes");
+        data.append(",");
+        data.append("Ops");
+        data.append("\n");
+
+        for (int i = 0; i < 20; i++) {
+            data.append(Integer.toString((i + 1) * 5));
+            data.append(",");
+            data.append(Long.toString(timeavg[i]));
+            data.append(",");
+            data.append(Integer.toString(stnodesavg[i]));
+            data.append(",");
+            data.append(Integer.toString(opsavg[i]));
+            data.append("\n");
+        }
+        data.flush();
+        data.close();
+    }
+
+    static void boxplot(int degree, int size, String filename) throws IOException {
+        int edgecount = size * degree;
+        long[] times = new long[100];
+        long[] stnodes = new long[100];
+        long[] ops = new long[100];
+
+        for (int j = 0; j < 100; j++) {
+            Graph test = Graph.randomGraph(degree, edgecount, size);
+            long start = System.nanoTime();
+            Graph.mis3(test);
+            long time = System.nanoTime() - start;
+            times[j] = time;
+            stnodes[j] = test.stnodes;
+            ops[j] = test.ops;
+        }
+
+        Arrays.sort(times);
+        Arrays.sort(stnodes);
+        Arrays.sort(ops);
+
+        FileWriter timedata = new FileWriter(filename + "time.csv");
+        FileWriter stnodesdata = new FileWriter(filename + "stnodes.csv");
+        FileWriter opsdata = new FileWriter(filename + "ops.csv");
+
+
+        for (int i = 0; i < 100; i++) {
+            timedata.append(Long.toString(times[i]));
+            timedata.append(",");
+            stnodesdata.append(Long.toString(stnodes[i]));
+            stnodesdata.append(",");
+            opsdata.append(Long.toString(ops[i]));
+            opsdata.append(",");
+        }
+        timedata.flush();
+        stnodesdata.flush();
+        opsdata.flush();
+
+        timedata.close();
+        stnodesdata.close();
+        opsdata.close();
+
+    }
+
+
     public static void main(String[] args) {
-        long[] averages3 = new long[40];
-
-        for(int i = 0; i < 40; i++) {
-            int degree = 3;
-            int size = (i + 1) * 5;
-            int edgecount = size * degree;
-            long[] times = new long[100];
-
-            for(int j = 0; j < 100; j++) {
-                Graph test = Graph.randomGraph(degree, edgecount, size);
-                long start = System.nanoTime();
-                Graph.mis3(test);
-                long time = System.nanoTime() - start;
-                times[j] = time;
-            }
-            long sum = 0;
-            for(int j = 0; j < 100; j++) {
-                sum += times[j];
-            }
-            averages3[i] = sum/100;
-        }
-        System.out.println("MAX DEGREE 3:");
-        for(int i = 0; i < 40; i++) {
-            System.out.println("Size: " + (i+1)*5 + " | Time: " + averages3[i]);
-        }
-
-        long[] averages4 = new long[40];
-
-        for(int i = 0; i < 40; i++) {
-            int degree = 4;
-            int size = (i + 1) * 5;
-            int edgecount = size * degree;
-            long[] times = new long[100];
-
-            for(int j = 0; j < 100; j++) {
-                Graph test = Graph.randomGraph(degree, edgecount, size);
-                long start = System.nanoTime();
-                Graph.mis3(test);
-                long time = System.nanoTime() - start;
-                times[j] = time;
-            }
-            long sum = 0;
-            for(int j = 0; j < 100; j++) {
-                sum += times[j];
-            }
-            averages4[i] = sum/100;
-        }
-        System.out.println("MAX DEGREE 4:");
-        for(int i = 0; i < 40; i++) {
-            System.out.println("Size: " + (i+1)*5 + " | Time: " + averages4[i]);
-        }
-
-        long[] averages5 = new long[40];
-
-        for(int i = 0; i < 40; i++) {
-            int degree = 5;
-            int size = (i + 1) * 5;
-            int edgecount = size * degree;
-            long[] times = new long[100];
-
-            for(int j = 0; j < 100; j++) {
-                Graph test = Graph.randomGraph(degree, edgecount, size);
-                long start = System.nanoTime();
-                Graph.mis3(test);
-                long time = System.nanoTime() - start;
-                times[j] = time;
-            }
-            long sum = 0;
-            for(int j = 0; j < 100; j++) {
-                sum += times[j];
-            }
-            averages5[i] = sum/100;
-        }
-        System.out.println("MAX DEGREE 5:");
-        for(int i = 0; i < 40; i++) {
-            System.out.println("Size: " + (i+1)*5 + " | Time: " + averages5[i]);
+        try {
+            boxplot(6, 100, "degree6");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

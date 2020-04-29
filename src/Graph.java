@@ -5,6 +5,8 @@ import java.util.*;
 
 public class Graph {
     int V;
+    int stnodes; //Use to count each node in a search tree, i.e. increment for each time we branch.
+    int ops; //Consider what operations are characteristic of the algorithm and count them. Degree correction of neighbors is probably it.
 
     LinkedList<Vertex> vertices;
     LinkedList<Vertex> degree0;
@@ -45,17 +47,17 @@ public class Graph {
 
     static void sortByDegree(Graph graph) {
         for (Vertex vertex : graph.vertices) {
-                if (vertex.degree == 0) {
-                    graph.degree0.add(vertex);
-                } else if (vertex.degree == 1) {
-                    graph.degree1.add(vertex);
-                } else if (vertex.degree == 2) {
-                    graph.degree2.add(vertex);
-                } else if (vertex.degree == 3) {
-                    graph.degree3.add(vertex);
-                } else {
-                    graph.degreeUp.add(vertex);
-                }
+            if (vertex.degree == 0) {
+                graph.degree0.add(vertex);
+            } else if (vertex.degree == 1) {
+                graph.degree1.add(vertex);
+            } else if (vertex.degree == 2) {
+                graph.degree2.add(vertex);
+            } else if (vertex.degree == 3) {
+                graph.degree3.add(vertex);
+            } else {
+                graph.degreeUp.add(vertex);
+            }
             Collections.sort(graph.degreeUp, Comparator.comparingInt((Vertex v) -> v.degree).reversed());
         }
     }
@@ -113,10 +115,10 @@ public class Graph {
 
         uncliqued.addAll(graph.vertices);
 
-        while(!uncliqued.isEmpty()) {
+        while (!uncliqued.isEmpty()) {
             LinkedList<Vertex> clique = new LinkedList<>();
             for (int i = 0; i < cliquesize; i++) {
-                if(!uncliqued.isEmpty()) {
+                if (!uncliqued.isEmpty()) {
                     Vertex vertex = uncliqued.remove(random.nextInt(uncliqued.size()));
                     clique.add(vertex);
                 }
@@ -124,17 +126,17 @@ public class Graph {
 
             cliqueleaders.add(clique.getFirst());
 
-            for(Vertex v1 : clique) {
-                for(Vertex v2: clique) {
-                    if(v1 != v2 && !v1.neighbors.contains(v2) && !v2.neighbors.contains(v1)) {
+            for (Vertex v1 : clique) {
+                for (Vertex v2 : clique) {
+                    if (v1 != v2 && !v1.neighbors.contains(v2) && !v2.neighbors.contains(v1)) {
                         addEdge(graph, v1.id, v2.id);
                     }
                 }
             }
         }
-        while(!cliqueleaders.isEmpty()) {
+        while (!cliqueleaders.isEmpty()) {
             Vertex v1 = cliqueleaders.remove(random.nextInt(cliqueleaders.size()));
-            if(!cliqueleaders.isEmpty()) {
+            if (!cliqueleaders.isEmpty()) {
                 Vertex v2 = cliqueleaders.get(random.nextInt(cliqueleaders.size()));
                 addEdge(graph, v1.id, v2.id);
             }
@@ -172,6 +174,7 @@ public class Graph {
         }
 
         for (Vertex neighbor : vertex.neighbors) {
+            graph.ops += 1; //Count significant operation
             if (!neighbor.removed) {
                 neighbor.degree = neighbor.degree - 1;
                 if (neighbor.degree <= 3) {
@@ -192,6 +195,7 @@ public class Graph {
             graph.degreeUp.add(vertex);
         }
         for (Vertex neighbor : vertex.neighbors) {
+            graph.ops += 1; //Count significant operation
             if (!neighbor.removed) {
                 neighbor.degree = neighbor.degree + 1;
                 if (neighbor.degree <= 4) {
@@ -226,10 +230,9 @@ public class Graph {
 
     static Vertex maxDegreeVertex(Graph graph) {
         Vertex maxDegreeVertex;
-        if(graph.degreeUp.size() > 0) {
+        if (graph.degreeUp.size() > 0) {
             maxDegreeVertex = graph.degreeUp.getFirst();
-        }
-        else{
+        } else {
             maxDegreeVertex = graph.degree3.getFirst();
         }
         return maxDegreeVertex;
@@ -247,36 +250,42 @@ public class Graph {
         return is;
     }
 
+    static int reduce(Graph graph) {
+        int misCount = 0;
+        LinkedList<Vertex> reducedVertices = new LinkedList<>();
+        while (graph.degree1.size() > 0) {
+            Vertex v = graph.degree1.getFirst();
+            LinkedList<Vertex> reduced = removeNeighborhood(graph, v);
+            misCount++;
+            reducedVertices.addAll(reduced);
+
+        }
+        while (graph.degree0.size() > 0) {
+            Vertex v = graph.degree0.getFirst();
+            Vertex reduced = removeVertex(graph, v);
+            misCount++;
+            reducedVertices.add(reduced);
+
+        }
+        misCount += mis3(graph);
+        restoreNeighborhood(graph, reducedVertices);
+        return misCount;
+    }
+
     static int mis3(Graph graph) {
-        if(graph.degree0.size() > 0 || graph.degree1.size() > 0) {
-            int misCount = 0;
-            LinkedList<Vertex> reducedVertices = new LinkedList<>();
-            while(graph.degree1.size() > 0) {
-                Vertex v = graph.degree1.getFirst();
-                LinkedList<Vertex> reduced = removeNeighborhood(graph, v);
-                misCount++;
-                reducedVertices.addAll(reduced);
-
-            }
-            while(graph.degree0.size() > 0) {
-                Vertex v = graph.degree0.getFirst();
-                Vertex reduced = removeVertex(graph, v);
-                misCount++;
-                reducedVertices.add(reduced);
-
-            }
-            misCount += mis3(graph);
-            restoreNeighborhood(graph, reducedVertices);
-            return misCount;
+        if (graph.degree0.size() > 0 || graph.degree1.size() > 0) {
+            return reduce(graph);
         }
         if (graph.degree3.size() > 0 || graph.degreeUp.size() > 0) {
             Vertex v = maxDegreeVertex(graph);
 
             LinkedList<Vertex> neighbors = removeNeighborhood(graph, v);
+            graph.stnodes += 1; //Count the branch
             int misCountAlt = 1 + mis3(graph);
             restoreNeighborhood(graph, neighbors);
 
             removeVertex(graph, v);
+            graph.stnodes += 1; //Count the branch
             int misCount = mis3(graph);
             restoreVertex(graph, v);
 
@@ -288,17 +297,55 @@ public class Graph {
         return 0;
     }
 
-    public static void main(String[] args) {
-        File file = new File("frb30-15-mis/frb30-15-1.mis");
-        try {
-            Graph testgraph1 = readGraph(file);
-            Graph testgraph2 = randomGraph(4, 110*4, 110);
-            Graph testgraph3 = randomClique(4, 24);
-            printGraph(testgraph3);
-            System.out.println("MIS: " + mis3(testgraph3));
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+    static LinkedList secondNeighbors(Vertex vertex) {
+        LinkedList<Vertex> secondNeighbors = new LinkedList<>();
+        for (Vertex neighbor : vertex.neighbors) {
+            secondNeighbors.addAll(neighbor.neighbors);
         }
+        return secondNeighbors;
+    }
+
+    static int mis2(Graph graph) {
+        if (graph.degree0.size() > 0 || graph.degree1.size() > 0) {
+            return reduce(graph);
+        }
+        if (graph.degree2.size() > 0) {
+            Vertex v = graph.degree2.getFirst();
+            Vertex u1 = v.neighbors.getFirst();
+            Vertex u2 = v.neighbors.getFirst();
+
+            if (u1.neighbors.contains(u2)) {
+                removeNeighborhood(graph, v);
+                return 1 + mis2(graph);
+            } else {
+                LinkedList<Vertex> secondNeighbors = secondNeighbors(v);
+                if (secondNeighbors.size() == 1) {
+                    Vertex w = secondNeighbors.getFirst();
+
+                    LinkedList<Vertex> removed = removeNeighborhood(graph, w);
+                    int misCount = 2 + mis2(graph);
+                    restoreNeighborhood(graph, removed);
+
+                    removeVertex(graph, w);
+                    int misCountAlt = 2 + mis2(graph);
+                    restoreVertex(graph, w);
+                }
+                if (secondNeighbors.size() > 1) {
+                    LinkedList<Vertex> removed = removeNeighborhood(graph, v);
+                    int misCount = mis2(graph);
+                    restoreNeighborhood(graph, removed);
+
+                    //TODO Recursive after removing v and its mirror. Make mirror function
+                }
+            }
+        }
+        return 0;
+    }
+
+    public static void main(String[] args) {
+        Graph testgraph2 = randomGraph(5, 1000, 100);
+        Graph testgraph3 = randomClique(4, 24);
+        printGraph(testgraph3);
+        System.out.println(mis3(testgraph3));
     }
 }
