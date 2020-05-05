@@ -11,7 +11,7 @@ public class Testing {
 
         for (int i = 0; i < 20; i++) {
             int size = (i + 1) * 5;
-            int edgecount = size * degree;
+            int edgecount = 9999;
             long[] times = new long[100];
             long[] stnodes = new long[100];
             long[] ops = new long[100];
@@ -108,7 +108,10 @@ public class Testing {
 
     public static void main(String[] args) {
         try {
-            boxplot(6, 100, "degree6");
+            //boxplot(6, 100, "degree6");
+            for(int i = 3; i <= 6; i++) {
+                testMethod(i, "degree" + i);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

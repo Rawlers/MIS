@@ -300,42 +300,308 @@ public class Graph {
     static LinkedList secondNeighbors(Vertex vertex) {
         LinkedList<Vertex> secondNeighbors = new LinkedList<>();
         for (Vertex neighbor : vertex.neighbors) {
-            secondNeighbors.addAll(neighbor.neighbors);
+            for (Vertex secondNeighbor : neighbor.neighbors) {
+                if (secondNeighbor != vertex && !secondNeighbors.contains(secondNeighbor)) {
+                    secondNeighbors.add(secondNeighbor);
+                }
+            }
         }
         return secondNeighbors;
+    }
+
+    static LinkedList removeMultiple(Graph graph, LinkedList<Vertex> vertices) {
+        LinkedList<Vertex> removed = new LinkedList<>();
+        for (Vertex vertex : vertices) {
+            removed.add(vertex);
+            removeVertex(graph, vertex);
+        }
+        return removed;
+    }
+
+    static LinkedList mirrors(Vertex vertex) {
+        LinkedList<Vertex> secondNeighbors = secondNeighbors(vertex);
+        LinkedList<Vertex> mirrors = new LinkedList<>();
+
+        a:
+        for (Vertex candidate : secondNeighbors) {
+            LinkedList<Vertex> temp = new LinkedList<>();
+            if (vertex.neighbors.remove(candidate)) {
+                temp.add(candidate);
+            }
+            for (Vertex neighbor : candidate.neighbors) {
+                if (vertex.neighbors.remove(neighbor)) {
+                    temp.add(neighbor);
+                }
+            }
+            for (Vertex member1 : vertex.neighbors) {
+                for (Vertex member2 : vertex.neighbors) {
+                    if (member1 != member2) {
+                        if (!member1.neighbors.contains(member2)) {
+                            vertex.neighbors.addAll(temp);
+                            continue a;
+                        }
+                    }
+                }
+            }
+            mirrors.add(candidate);
+            vertex.neighbors.addAll(temp);
+        }
+        return mirrors;
+    }
+
+    static int edgesBetween(Vertex u1, Vertex u2, Vertex u3) {
+        int edges = 0;
+        for (Vertex neighbor : u1.neighbors) { //list.contains uses loop, manual loop here reduces the amount.
+            if (neighbor == u2) {
+                edges++;
+            } else if (neighbor == u3) {
+                edges++;
+            }
+        }
+        if (u2.neighbors.contains(u3)) {
+            edges += 1;
+        }
+        return edges;
+    }
+
+    static Graph component(Graph graph) {
+        LinkedList<Vertex> visited = new LinkedList<>();
+        LinkedList<Vertex> queue = new LinkedList<>();
+        Vertex v = graph.vertices.getFirst();
+
+        visited.add(v);
+        queue.add(v);
+
+        while (queue.size() > 0) {
+            v = queue.poll();
+            int i = 0;
+
+            while (i <= v.neighbors.size()) {
+                Vertex n = v.neighbors.get(i);
+
+                if (!visited.contains(n)) {
+                    visited.add(n);
+                    queue.add(n);
+                }
+                i++;
+            }
+        }
+
+        if (visited.size() != graph.V) {
+            Graph component = new Graph(visited.size());
+            component.vertices = visited;
+            return component;
+        }
+
+        return graph;
+    }
+
+    static boolean regular4or5(Graph graph) {
+        if(graph.V == 4) {
+            for(Vertex vertex : graph.vertices) {
+                if (vertex.degree != 4) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if(graph.V == 5) {
+            for(Vertex vertex : graph.vertices) {
+                if (vertex.degree != 5) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     static int mis2(Graph graph) {
         if (graph.degree0.size() > 0 || graph.degree1.size() > 0) {
             return reduce(graph);
         }
+
         if (graph.degree2.size() > 0) {
             Vertex v = graph.degree2.getFirst();
-            Vertex u1 = v.neighbors.getFirst();
-            Vertex u2 = v.neighbors.getFirst();
+            Vertex u1 = v.neighbors.get(0);
+            Vertex u2 = v.neighbors.get(1);
 
             if (u1.neighbors.contains(u2)) {
-                removeNeighborhood(graph, v);
-                return 1 + mis2(graph);
+                LinkedList<Vertex> removed = removeNeighborhood(graph, v);
+                int misCount = mis2(graph);
+                restoreNeighborhood(graph, removed);
+                return 1 + misCount;
+
             } else {
                 LinkedList<Vertex> secondNeighbors = secondNeighbors(v);
+
                 if (secondNeighbors.size() == 1) {
                     Vertex w = secondNeighbors.getFirst();
 
                     LinkedList<Vertex> removed = removeNeighborhood(graph, w);
+                    removed.addAll(removeNeighborhood(graph, v));
                     int misCount = 2 + mis2(graph);
                     restoreNeighborhood(graph, removed);
 
-                    removeVertex(graph, w);
+                    removed = removeNeighborhood(graph, v);
+                    removed.add(removeVertex(graph, w));
                     int misCountAlt = 2 + mis2(graph);
-                    restoreVertex(graph, w);
+                    restoreNeighborhood(graph, removed);
+
+                    return Math.max(misCount, misCountAlt);
                 }
+
                 if (secondNeighbors.size() > 1) {
                     LinkedList<Vertex> removed = removeNeighborhood(graph, v);
                     int misCount = mis2(graph);
                     restoreNeighborhood(graph, removed);
 
-                    //TODO Recursive after removing v and its mirror. Make mirror function
+                    removed = removeMultiple(graph, mirrors(v));
+                    removed.add(removeVertex(graph, v));
+                    int misCountAlt = mis2(graph);
+                    restoreNeighborhood(graph, removed);
+
+                    return Math.max(misCount, misCountAlt);
+                }
+            }
+        }
+
+        if (graph.degree3.size() > 0) {
+            Vertex v = graph.degree3.getFirst();
+            Vertex u1 = v.neighbors.get(0);
+            Vertex u2 = v.neighbors.get(1);
+            Vertex u3 = v.neighbors.get(2);
+            int edgesBetween = edgesBetween(u1, u2, u3);
+
+            if (edgesBetween == 0) {
+                LinkedList<Vertex> mirrors = mirrors(v);
+
+                if (mirrors.size() > 0) {
+                    LinkedList<Vertex> removed = removeNeighborhood(graph, v);
+                    int misCount = 1 + mis2(graph);
+                    restoreNeighborhood(graph, removed);
+
+                    removed = removeMultiple(graph, mirrors); //List instead of function so we dont double compute
+                    removed.add(removeVertex(graph, v));
+                    int misCountAlt = mis2(graph);
+                    restoreNeighborhood(graph, removed);
+
+                    return Math.max(misCount, misCountAlt);
+
+                } else {
+                    LinkedList<Vertex> removed = removeNeighborhood(graph, v);
+                    int misCount1 = 1 + mis2(graph);
+                    restoreNeighborhood(graph, removed);
+
+                    removed = removeNeighborhood(graph, u1);
+                    removed.addAll(removeNeighborhood(graph, u2));
+                    int misCount2 = 2 + mis2(graph);
+                    restoreNeighborhood(graph, removed); //COULD MAKE SOME EFFICIENCY CHANGES HERE, NO NEED TO REMOVE SAME NEIGHBORHOODS MULTIPLE TIMES
+
+                    removed = removeNeighborhood(graph, u1);
+                    removed.addAll(removeNeighborhood(graph, u3));
+                    removed.add(removeVertex(graph, u2));
+                    int misCount3 = 2 + mis2(graph);
+                    restoreNeighborhood(graph, removed);
+
+                    removed = removeNeighborhood(graph, u2);
+                    removed.addAll(removeNeighborhood(graph, u3));
+                    removed.add(removeVertex(graph, u1));
+                    int misCount4 = 2 + mis2(graph);
+                    restoreNeighborhood(graph, removed);
+
+                    return Math.max(Math.max(misCount1, misCount2), Math.max(misCount3, misCount4));
+                }
+            }
+
+            if (edgesBetween == 1 || edgesBetween == 2) {
+                LinkedList<Vertex> removed = removeNeighborhood(graph, v);
+                int misCount = 1 + mis2(graph);
+                restoreNeighborhood(graph, removed);
+
+                removed = removeMultiple(graph, mirrors(v));
+                removed.add(removeVertex(graph, v));
+                int misCountAlt = mis2(graph);
+                restoreNeighborhood(graph, removed);
+
+                return Math.max(misCount, misCountAlt);
+            }
+
+            if (edgesBetween == 3) {
+                LinkedList<Vertex> removed = removeNeighborhood(graph, v);
+                int misCount = 1 + mis2(graph);
+                restoreNeighborhood(graph, removed);
+
+                return misCount;
+            }
+        }
+
+        if (graph.degreeUp.getFirst().degree >= 6) {
+            Vertex v = graph.degreeUp.removeFirst();
+
+            LinkedList<Vertex> neighbors = removeNeighborhood(graph, v);
+            int misCountAlt = 1 + mis3(graph);
+            restoreNeighborhood(graph, neighbors);
+
+            removeVertex(graph, v);
+            int misCount = mis3(graph);
+            restoreVertex(graph, v);
+
+            return Math.max(misCountAlt, misCount);
+        }
+
+        Graph component = component(graph);
+        if (component.V < graph.V) {
+            int misCount = mis2(component);
+
+            LinkedList<Vertex> removed = removeMultiple(graph, component.vertices);
+            int misCountAlt = mis2(graph);
+            restoreNeighborhood(graph, removed);
+
+            return Math.max(misCountAlt, misCount);
+        }
+
+        if (regular4or5(graph)) {
+            Vertex v = graph.vertices.getFirst();
+
+            LinkedList<Vertex> removed = removeNeighborhood(graph, v);
+            int misCount = 1 + mis2(graph);
+            restoreNeighborhood(graph, removed);
+
+            removed = removeMultiple(graph, mirrors(v));
+            removed.add(removeVertex(graph, v));
+            int misCountAlt = mis2(graph);
+            restoreNeighborhood(graph, removed);
+
+            return Math.max(misCountAlt, misCount);
+        }
+
+        if (graph.degreeUp.getFirst().degree == 5 && graph.degreeUp.getLast().degree == 4) {
+            Vertex v = graph.degreeUp.getFirst();
+            Vertex w;
+            for(Vertex vertex : graph.degreeUp) {
+                for(Vertex neighbor : v.neighbors) {
+                    if(neighbor.degree == 4) {
+                        w = neighbor;
+
+                        LinkedList<Vertex> removed = removeNeighborhood(graph, v);
+                        int misCount1 = 1 + mis2(graph);
+                        restoreNeighborhood(graph, removed);
+
+                        removed = removeMultiple(graph, mirrors(v));
+                        removed.addAll(removeNeighborhood(graph, w));
+                        removed.add(removeVertex(graph, v));
+                        int misCount2 = 1 + mis2(graph);
+                        restoreNeighborhood(graph, removed);
+
+                        removed = removeMultiple(graph, mirrors(v));
+                        removed.add(removeVertex(graph, v));
+                        removed.add(removeVertex(graph, w));
+                        int misCount3 = mis2(graph);
+                        restoreNeighborhood(graph, removed);
+
+                        return Math.max(misCount1, Math.max(misCount2, misCount3));
+                    }
                 }
             }
         }
@@ -346,6 +612,6 @@ public class Graph {
         Graph testgraph2 = randomGraph(5, 1000, 100);
         Graph testgraph3 = randomClique(4, 24);
         printGraph(testgraph3);
-        System.out.println(mis3(testgraph3));
+        System.out.println(mis2(testgraph3));
     }
 }
