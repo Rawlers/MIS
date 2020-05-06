@@ -63,7 +63,7 @@ public class Testing {
     }
 
     static void boxplot(int degree, int size, String filename) throws IOException {
-        int edgecount = size * degree;
+        int edgecount = 9999;
         long[] times = new long[100];
         long[] stnodes = new long[100];
         long[] ops = new long[100];

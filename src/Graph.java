@@ -376,7 +376,7 @@ public class Graph {
             v = queue.poll();
             int i = 0;
 
-            while (i <= v.neighbors.size()) {
+            while (i < v.neighbors.size()) {
                 Vertex n = v.neighbors.get(i);
 
                 if (!visited.contains(n)) {
@@ -536,7 +536,7 @@ public class Graph {
             }
         }
 
-        if (graph.degreeUp.getFirst().degree >= 6) {
+        if (graph.degreeUp.size() > 0 && graph.degreeUp.getFirst().degree >= 6) {
             Vertex v = graph.degreeUp.removeFirst();
 
             LinkedList<Vertex> neighbors = removeNeighborhood(graph, v);
@@ -576,7 +576,7 @@ public class Graph {
             return Math.max(misCountAlt, misCount);
         }
 
-        if (graph.degreeUp.getFirst().degree == 5 && graph.degreeUp.getLast().degree == 4) {
+        if (graph.degreeUp.size() > 0 && graph.degreeUp.getFirst().degree == 5 && graph.degreeUp.getLast().degree == 4) {
             Vertex v = graph.degreeUp.getFirst();
             Vertex w;
             for(Vertex vertex : graph.degreeUp) {
@@ -609,9 +609,9 @@ public class Graph {
     }
 
     public static void main(String[] args) {
-        Graph testgraph2 = randomGraph(5, 1000, 100);
+        Graph testgraph2 = randomGraph(6, 1000, 100);
         Graph testgraph3 = randomClique(4, 24);
-        printGraph(testgraph3);
-        System.out.println(mis2(testgraph3));
+        printGraph(testgraph2);
+        System.out.println(mis2(testgraph2));
     }
 }
