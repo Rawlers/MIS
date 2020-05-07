@@ -134,13 +134,13 @@ public class Graph {
                 }
             }
         }
-        while (!cliqueleaders.isEmpty()) {
+        /*while (!cliqueleaders.isEmpty()) {
             Vertex v1 = cliqueleaders.remove(random.nextInt(cliqueleaders.size()));
             if (!cliqueleaders.isEmpty()) {
                 Vertex v2 = cliqueleaders.get(random.nextInt(cliqueleaders.size()));
                 addEdge(graph, v1.id, v2.id);
             }
-        }
+        }*/
         for (Vertex vertex : graph.vertices) {
             vertex.degree = vertex.getDegree();
         }
@@ -183,6 +183,7 @@ public class Graph {
                 }
             }
         }
+        graph.V -= 1;
         return vertex;
     }
 
@@ -204,6 +205,7 @@ public class Graph {
                 }
             }
         }
+        graph.V += 1;
     }
 
     static LinkedList<Vertex> removeNeighborhood(Graph graph, Vertex vertex) {
@@ -318,6 +320,15 @@ public class Graph {
         return removed;
     }
 
+    static Vertex getFirstVertex(Graph graph) {
+        for(Vertex vertex : graph.vertices) {
+            if(!vertex.removed) {
+                return vertex;
+            }
+        }
+        return null;
+    }
+
     static LinkedList mirrors(Vertex vertex) {
         LinkedList<Vertex> secondNeighbors = secondNeighbors(vertex);
         LinkedList<Vertex> mirrors = new LinkedList<>();
@@ -367,7 +378,7 @@ public class Graph {
     static Graph component(Graph graph) {
         LinkedList<Vertex> visited = new LinkedList<>();
         LinkedList<Vertex> queue = new LinkedList<>();
-        Vertex v = graph.vertices.getFirst();
+        Vertex v = getFirstVertex(graph);
 
         visited.add(v);
         queue.add(v);
@@ -379,7 +390,7 @@ public class Graph {
             while (i < v.neighbors.size()) {
                 Vertex n = v.neighbors.get(i);
 
-                if (!visited.contains(n)) {
+                if (!visited.contains(n) && !n.removed) {
                     visited.add(n);
                     queue.add(n);
                 }
@@ -387,9 +398,10 @@ public class Graph {
             }
         }
 
-        if (visited.size() != graph.V) {
+        if (visited.size() < graph.V) {
             Graph component = new Graph(visited.size());
             component.vertices = visited;
+            sortByDegree(component);
             return component;
         }
 
@@ -397,26 +409,30 @@ public class Graph {
     }
 
     static boolean regular4or5(Graph graph) {
-        if(graph.V == 4) {
-            for(Vertex vertex : graph.vertices) {
+        boolean regular4 = true;
+        boolean regular5 = true;
+        for (Vertex vertex : graph.vertices) {
+            if(!vertex.removed) {
                 if (vertex.degree != 4) {
-                    return false;
+                    regular4 = false;
                 }
             }
-            return true;
         }
-        if(graph.V == 5) {
-            for(Vertex vertex : graph.vertices) {
+        for (Vertex vertex : graph.vertices) {
+            if(!vertex.removed) {
                 if (vertex.degree != 5) {
-                    return false;
+                    regular5 = false;
                 }
             }
-            return true;
         }
-        return false;
+        return regular4 || regular5;
+
     }
 
     static int mis2(Graph graph) {
+        if (graph.V == 0) {
+            return 0;
+        }
         if (graph.degree0.size() > 0 || graph.degree1.size() > 0) {
             return reduce(graph);
         }
@@ -556,13 +572,13 @@ public class Graph {
 
             LinkedList<Vertex> removed = removeMultiple(graph, component.vertices);
             int misCountAlt = mis2(graph);
-            restoreNeighborhood(graph, removed);
+            restoreNeighborhood(graph, removed); //Counts too many in component and regular case.
 
-            return Math.max(misCountAlt, misCount);
+            return misCount + misCountAlt;
         }
 
         if (regular4or5(graph)) {
-            Vertex v = graph.vertices.getFirst();
+            Vertex v = graph.getFirstVertex(graph);
 
             LinkedList<Vertex> removed = removeNeighborhood(graph, v);
             int misCount = 1 + mis2(graph);
@@ -579,9 +595,9 @@ public class Graph {
         if (graph.degreeUp.size() > 0 && graph.degreeUp.getFirst().degree == 5 && graph.degreeUp.getLast().degree == 4) {
             Vertex v = graph.degreeUp.getFirst();
             Vertex w;
-            for(Vertex vertex : graph.degreeUp) {
-                for(Vertex neighbor : v.neighbors) {
-                    if(neighbor.degree == 4) {
+            for (Vertex vertex : graph.degreeUp) {
+                for (Vertex neighbor : v.neighbors) {
+                    if (neighbor.degree == 4) {
                         w = neighbor;
 
                         LinkedList<Vertex> removed = removeNeighborhood(graph, v);
@@ -609,9 +625,9 @@ public class Graph {
     }
 
     public static void main(String[] args) {
-        Graph testgraph2 = randomGraph(6, 1000, 100);
-        Graph testgraph3 = randomClique(4, 24);
-        printGraph(testgraph2);
-        System.out.println(mis2(testgraph2));
+        Graph testgraph2 = randomGraph(6, 9999, 100);
+        Graph testgraph3 = randomClique(6, 10);
+        printGraph(testgraph3);
+        System.out.println(mis2(testgraph3));
     }
 }

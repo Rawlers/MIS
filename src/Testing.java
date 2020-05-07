@@ -6,8 +6,8 @@ public class Testing {
 
     static void testMethod(int degree, String filename) throws IOException {
         long[] timeavg = new long[20];
-        int[] stnodesavg = new int[20];
-        int[] opsavg = new int[20];
+        long[] stnodesavg = new long[20];
+        long[] opsavg = new long[20];
 
         for (int i = 0; i < 20; i++) {
             int size = (i + 1) * 5;
@@ -26,8 +26,8 @@ public class Testing {
                 ops[j] = test.ops;
             }
             long timesum = 0;
-            int stnodessum = 0;
-            int opssum = 0;
+            long stnodessum = 0;
+            long opssum = 0;
             for (int j = 0; j < 100; j++) {
                 timesum += times[j];
                 stnodessum += stnodes[j];
@@ -53,9 +53,9 @@ public class Testing {
             data.append(",");
             data.append(Long.toString(timeavg[i]));
             data.append(",");
-            data.append(Integer.toString(stnodesavg[i]));
+            data.append(Long.toString(stnodesavg[i]));
             data.append(",");
-            data.append(Integer.toString(opsavg[i]));
+            data.append(Long.toString(opsavg[i]));
             data.append("\n");
         }
         data.flush();
