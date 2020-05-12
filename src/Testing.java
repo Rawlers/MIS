@@ -11,7 +11,7 @@ public class Testing {
 
         for (int i = 0; i < 20; i++) {
             int size = (i + 1) * 5;
-            int edgecount = 9999;
+            int edgecount = size * degree;
             long[] times = new long[100];
             long[] stnodes = new long[100];
             long[] ops = new long[100];
@@ -19,7 +19,7 @@ public class Testing {
             for (int j = 0; j < 100; j++) {
                 Graph test = Graph.randomGraph(degree, edgecount, size);
                 long start = System.nanoTime();
-                Graph.mis3(test);
+                Graph.mis2(test);
                 long time = System.nanoTime() - start;
                 times[j] = time;
                 stnodes[j] = test.stnodes;
@@ -63,7 +63,7 @@ public class Testing {
     }
 
     static void boxplot(int degree, int size, String filename) throws IOException {
-        int edgecount = 9999;
+        int edgecount = size * degree;
         long[] times = new long[100];
         long[] stnodes = new long[100];
         long[] ops = new long[100];
@@ -71,7 +71,7 @@ public class Testing {
         for (int j = 0; j < 100; j++) {
             Graph test = Graph.randomGraph(degree, edgecount, size);
             long start = System.nanoTime();
-            Graph.mis3(test);
+            Graph.mis2(test);
             long time = System.nanoTime() - start;
             times[j] = time;
             stnodes[j] = test.stnodes;
@@ -108,10 +108,8 @@ public class Testing {
 
     public static void main(String[] args) {
         try {
-            //boxplot(6, 100, "degree6");
-            for(int i = 3; i <= 6; i++) {
-                testMethod(i, "degree" + i);
-            }
+            testMethod(10, "mis2degree" + 10);
+            boxplot(10, 100, "mis2degree10");
         } catch (IOException e) {
             e.printStackTrace();
         }
